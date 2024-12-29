@@ -3,13 +3,21 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://Edge7481.github.io/hsr-speed-tuner",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
+    "test": "vitest"
   },
   "devDependencies": {
+    "@vitest/ui": "^2.1.8",
+    "gh-pages": "^6.2.0",
+    "jsdom": "^25.0.1",
     "typescript": "~5.6.2",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
   }
 }
