@@ -81,4 +81,5 @@ function calculate() {
 }
 
 loadParametersFromURL();
+calculate();
 calculateButton.addEventListener("click", calculate);
