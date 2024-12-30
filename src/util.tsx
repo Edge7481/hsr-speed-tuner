@@ -47,22 +47,16 @@ export function calculateSPD(
   isVonwacq: boolean,
   customTargetResult: number,
   customAAResult: number,
-  dddModules: HTMLElement[],
+  dddModules: { superimpose: number; timesProcd: number }[],
   eagleTimesProcd: number
 ): number {
   const vonwacqAdjustment = applyVonwacqAdjustment(isVonwacq);
   const eagleAdjustment = calculateEagleAdjustment(eagleTimesProcd);
   
   const dddResults = dddModules
-    .map((module) => {
-      const superimposeInput = module.querySelector(".s") as HTMLInputElement;
-      const timesProcdInput = module.querySelector(".x") as HTMLInputElement;
-
-      const superimposeValue = parseFloat(superimposeInput.value) || 0;
-      const timesProcdValue = parseFloat(timesProcdInput.value) || 0;
-
-      if (superimposeValue >= 1 && superimposeValue <= 5 && timesProcdValue > 0) {
-        return calculateDDD(superimposeValue, timesProcdValue);
+    .map(({ superimpose, timesProcd }) => {
+      if (superimpose >= 1 && superimpose <= 5 && timesProcd > 0) {
+        return calculateDDD(superimpose, timesProcd);
       }
       return 0;
     })

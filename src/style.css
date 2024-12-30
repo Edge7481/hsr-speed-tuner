@@ -6,7 +6,7 @@ body {
   color: #ffffff; /* Light text color */
 }
 
-#app {
+#simple {
   max-width: 600px;
   margin: 20px auto;
   padding: 20px;
@@ -38,15 +38,17 @@ button {
 }
 
 input[type="number"] {
-  width: calc(100% - 22px);
+  width: 100%;
   background-color: #333333; /* Dark input background */
   color: #ffffff; /* Light text */
   border: 1px solid #444444; /* Subtle border */
+  box-sizing: border-box; /* Ensures padding is inside the element */
 }
 
 input[type="checkbox"] {
   transform: scale(1.2); /* Larger checkboxes */
   cursor: pointer;
+  margin-top: 5px; /* Align with other inputs */
 }
 
 button {
@@ -76,8 +78,15 @@ h3 {
 
 .input-row {
   display: flex;
-  flex-direction: column; /* Stack the title and inputs vertically */
-  gap: 5px; /* Space between title and inputs */
+  flex-direction: column; /* Stack label and input vertically */
+  gap: 5px; /* Space between label and input */
+  align-items: flex-start; /* Align children (label and checkbox) to the left */
+}
+
+.input-row label {
+  font-weight: bold;
+  color: #ffffff;
+  margin-left: 0; /* Ensure label is aligned to the left */
 }
 
 .input-row h4 {
@@ -101,9 +110,86 @@ h3 {
   background-color: #333;
   border: 1px solid #444;
   color: #fff;
+  box-sizing: border-box; /* Ensures padding does not overflow */
 }
 
 #result {
   font-size: 1.5rem;
   color: #4caf50; /* Success green for results */
+}
+
+.input-row input[type="checkbox"] {
+  transform: scale(1.2); /* Larger checkboxes */
+  cursor: pointer;
+  margin-left: 0; /* Remove any left margin */
+  margin-top: 5px; /* Space from the label */
+}
+
+.ddd-module {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ddd-module h4 {
+  font-weight: bold;
+  color: #ffcc00;
+}
+
+.ddd-module input {
+  padding: 10px;
+  background-color: #333;
+  border: 1px solid #444;
+  color: #fff;
+}
+
+.ddd-module input[type="number"] {
+  width: 100%; /* Make sure DDD module inputs don't overflow */
+  box-sizing: border-box;
+}
+
+.action-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action-block {
+  border: 1px solid #ccc;
+  padding: 10px;
+  background-color: #333; /* Darker background */
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 20px;
+}
+
+.left-pane {
+  flex: 1;
+  max-width: 45%;
+  padding: 20px;
+  background-color: #1e1e1e;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.right-pane {
+  flex: 1;
+  max-width: 45%;
+  padding: 20px;
+  background-color: #282828;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.right-pane h2 {
+  color: #ffcc00;
+}
+
+.actor-block,
+.total-av-box {
+  margin-bottom: 20px;
 }
