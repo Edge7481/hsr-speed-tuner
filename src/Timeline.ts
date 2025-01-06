@@ -64,61 +64,125 @@ export class Actor {
   }
 }
 
+export enum ModifierType {
+  IN_ACTION = 'IN_ACTION',
+  POST_ACTION = 'POST_ACTION',
+}
+
+export interface Modifier {
+  type: ModifierType;
+  spdChange?: number; // Percent change (positive or negative)
+  actionAdvancePercent?: number; // Action advance/delay change
+  expiration: number;
+  target: 'all' | string; // Either all actors or a specific actor name
+  timeApplied: number; // Track the tick when this modifier is applied
+  name: string;
+}
+
+export class ModifierHandler {
+  modifiers: Modifier[];
+
+  constructor() {
+    this.modifiers = [];
+  }
+
+  // Add a new modifier
+  addModifier(modifier: Modifier) {
+    this.modifiers.push(modifier);
+  }
+
+  // Apply modifiers based on their type and the current tick
+  applyModifiers(actors: Actor[], currentTick: number, modifierType: ModifierType) {
+    actors.forEach(actor => {
+      this.modifiers.forEach(modifier => {
+        // If the modifier is active and matches the current target
+        if (modifier.expiration > 0 && (modifier.target === 'all' || modifier.target === actor.name)) {
+          // Apply modifiers if they match the given type and the expiration is still valid
+          if (modifier.type === modifierType) {
+            if (modifier.spdChange !== undefined) {
+              actor.updateSpeed(actor.spdPercent + modifier.spdChange, actor.flatSPD);
+            }
+            if (modifier.actionAdvancePercent !== undefined) {
+              // Apply action advance only for the current cycle
+              actor.modifyAVForAction(modifier.actionAdvancePercent, 0); // Assuming no action delay for simplicity
+            }
+          }
+
+          // Decrease expiration after each tick, tracking from pre-action
+          modifier.expiration -= 1;
+        }
+      });
+    });
+  }
+}
+
+
+
+
 export class ActionTimeline {
   actors: Actor[];
   totalAV: number;
+  modifierHandler: ModifierHandler;
 
-  constructor(actors: Actor[], totalAV: number) {
+  constructor(actors: Actor[], totalAV: number, modifierHandler: ModifierHandler) {
     this.actors = actors;
     this.totalAV = totalAV;
+    this.modifierHandler = modifierHandler;
   }
 
   // Get the actor with the lowest current AV (who should act next)
   getNextActor(): Actor {
     const minAV = Math.min(...this.actors.map(actor => actor.currentAV));
-    return this.actors.find(actor => actor.currentAV === minAV)!; // Only one actor will have the lowest AV
+    return this.actors.find(actor => actor.currentAV === minAV)!;
   }
 
   simulateTurn(): { actor: string; actionAV: number }[] {
     let totalAVElapsed = 0; // Track the total AV elapsed
     const timelineLogs: { actor: string; actionAV: number }[] = [];
-  
+    let currentTick = 0;
+
     while (totalAVElapsed < this.totalAV) {
-      // Find the minimum AV to subtract from all actors (actor who acts next)
+      // Find the minimum AV to subtract from all actors
       const avToSubtract = Math.min(...this.actors.map(actor => actor.currentAV));
-      console.log(this.actors.map(actor => actor.currentAV)); // Debugging log
-  
+
       // Calculate the projected total AV after this actor acts
       const projectedTotalAV = totalAVElapsed + avToSubtract;
-  
+
       // If acting would exceed the total AV, break out of the loop
       if (projectedTotalAV > this.totalAV) {
         break;
       }
-  
+
       // Add the AV to the total time elapsed
       totalAVElapsed += avToSubtract;
-  
+
       // Subtract this minimum AV from all actors (update currentAV for each actor)
       this.actors.forEach(actor => actor.applyTimeElapsed(avToSubtract));
-  
+
+      // Apply IN_ACTION modifiers immediately after AV subtraction
+      this.modifierHandler.applyModifiers(this.actors, currentTick, ModifierType.IN_ACTION);
+
       // Find the actor with the minimum AV (who should act next)
       const nextActor = this.getNextActor();
-  
+
       // Log the actor’s action
       timelineLogs.push({ actor: nextActor.name, actionAV: totalAVElapsed });
-  
+
       // Reset the selected actor's current AV to its base value
       nextActor.resetAV();
-  
+
+      // Apply POST_ACTION modifiers immediately after AV reset
+      this.modifierHandler.applyModifiers(this.actors, currentTick, ModifierType.POST_ACTION);
+
+      // Increment the tick count
+      currentTick++;
+
       // If total AV elapsed exceeds or matches the total, break the loop
       if (totalAVElapsed >= this.totalAV) {
         break;
       }
     }
-  
-    return timelineLogs;
-  
-}
 
+    return timelineLogs;
+  }
 }
