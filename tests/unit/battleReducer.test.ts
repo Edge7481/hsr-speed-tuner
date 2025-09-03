@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
-import { battleReducer } from "../../src/battle/battleReducer"
-import { BattleState, BattleAction, UnitState } from "../../src/battle/battleTypes"
+import { battleReducer } from "../../src/reducers/battleReducer"
+import { BattleState, BattleAction, UnitState } from "../../src/types/battleTypes"
 
 
 function makeUnit(id: string, name: string, spd: number): UnitState {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { battleReducer } from "../../src/battle/battleReducer"
-import { BattleState, BattleAction, UnitState, BuffState } from "../../src/battle/battleTypes"
+import { battleReducer } from "../../src/reducers/battleReducer"
+import { BattleState, BattleAction, UnitState, BuffState } from "../../src/types/battleTypes"
 
 describe('Buff application with duration', () => {
     it('applies +100 SPD buff for 2 turns after first action', () => {
@@ -50,7 +50,7 @@ describe('Buff application with duration', () => {
     })
 })
 
-import { applyAuraBuff } from "../../src/battle/buffHelper"
+import { applyAuraBuff } from "../../src/utils/buffHelper"
 
 describe('Aura buff application', () => {
     it('applies a 2-turn aura from support to DPS and expires correctly', () => {

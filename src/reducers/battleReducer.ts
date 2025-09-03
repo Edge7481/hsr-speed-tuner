@@ -1,5 +1,5 @@
-import { BattleState, UnitState, TimelineEntry, TimelineEvent, BattleAction, BuffState } from "./battleTypes"
-import { buildMinHeap, popMin } from "./util"
+import { BattleState, UnitState, TimelineEntry, TimelineEvent, BattleAction, BuffState } from "../types/battleTypes"
+import { buildMinHeap, popMin } from "../utils/util"
 
 export function battleReducer(state: BattleState, action: BattleAction): BattleState {
     switch (action.type) {
@@ -116,6 +116,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
 
         case 'APPLY_BUFF': {
+            console.log(state)
             const { unitId, buff } = action.payload
             let nextState = { ...state }
 

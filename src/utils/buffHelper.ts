@@ -1,5 +1,5 @@
-import { battleReducer } from "./battleReducer"
-import { BattleState, BuffState } from "./battleTypes"
+import { battleReducer } from "../reducers/battleReducer"
+import { BattleState, BuffState } from "../types/battleTypes"
 
 // Helper to apply aura buffs
 export function applyAuraBuff(

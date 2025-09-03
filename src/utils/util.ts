@@ -1,4 +1,4 @@
-import { TimelineEntry } from "./battleTypes"
+import { TimelineEntry } from "../types/battleTypes"
 
 export function buildMinHeap(entries: TimelineEntry[]): TimelineEntry[] {
   return entries.sort((a, b) => a.nextActionAV - b.nextActionAV)
