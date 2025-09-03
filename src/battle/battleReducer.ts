@@ -28,26 +28,19 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
         }
 
         case 'SIMULATE_NEXT': {
+            //TODO: implement tie-breaks (left to right)
             if (state.heap.length === 0) return state
 
             const heapCopy = [...state.heap]
-            const entry = popMin(heapCopy) // unit with lowest AV
+            const entry = popMin(heapCopy) // unit with lowest nextActionAV
             const actingUnit = { ...state.units[entry.unitId] }
 
-            // Advance time
-            const tickAdvance = entry.nextActionAV
-            const globalTick = state.globalTick + tickAdvance
+            // Advance globalTick to acting unit's scheduled tick
+            const globalTick = entry.nextActionAV
 
-            // Subtract AV from all units
-            const unitsCopy: Record<string, UnitState> = {}
-            Object.values(state.units).forEach(u => {
-                unitsCopy[u.id] = { ...u, currentAV: u.currentAV - tickAdvance }
-            })
-
-            // === Unit acts ===
-            const actionType = 'default' // placeholder, UI chooses later
-
-            const snapshot = Object.values(unitsCopy).map(u => ({ ...u }))
+            // Unit acts
+            const actionType = 'default' // placeholder
+            const snapshot = Object.values(state.units).map(u => ({ ...u }))
             const event: TimelineEvent = {
                 tick: globalTick,
                 unitId: actingUnit.id,
@@ -55,14 +48,16 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 stateSnapshot: snapshot
             }
 
-            // Reset acting unit’s AV
-            const updatedUnit = {
-                ...unitsCopy[actingUnit.id],
-                baseAV: 10000 / actingUnit.currentSPD,
-                currentAV: 10000 / actingUnit.currentSPD
+            // Reset acting unit's nextActionAV by adding baseAV
+            const updatedUnit: UnitState = {
+                ...actingUnit,
+                currentAV: actingUnit.currentAV + actingUnit.baseAV
             }
-            unitsCopy[actingUnit.id] = updatedUnit
 
+            // Update units
+            const unitsCopy = { ...state.units, [updatedUnit.id]: updatedUnit }
+
+            // Push back into heap
             heapCopy.push({
                 unitId: updatedUnit.id,
                 nextActionAV: updatedUnit.currentAV,
@@ -86,16 +81,21 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             unit.buffs = [...unit.buffs, buff]
 
             if (buff.effects.spdChange) {
+                //find remaining av and apply spd change to av
                 const oldSPD = unit.currentSPD
                 unit.currentSPD += buff.effects.spdChange
                 const newSPD = unit.currentSPD
-                unit.currentAV = unit.currentAV * (oldSPD / newSPD)
-                unit.baseAV = 10000 / newSPD
+                const remainingTime = unit.currentAV - state.globalTick
+                const newBaseAV = 10000 / newSPD
+                unit.baseAV = newBaseAV
+                unit.currentAV = state.globalTick + remainingTime * (oldSPD / newSPD)
+
             }
 
             if (buff.effects.advance || buff.effects.delay) {
+                // set to either right now or apply advance
                 const delta = unit.baseAV * ((buff.effects.advance ?? 0) - (buff.effects.delay ?? 0))
-                unit.currentAV = Math.max(0, unit.currentAV - delta)
+                unit.currentAV = Math.max(state.globalTick, unit.currentAV - delta)
             }
 
             unitsCopy[unitId] = unit

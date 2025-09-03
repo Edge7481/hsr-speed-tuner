@@ -43,7 +43,7 @@ export interface BuffState {
     globalTick: number
   }
   
-  export type BattleAction =
+export type BattleAction =
   | { type: 'INIT_BATTLE'; payload: { units: Omit<UnitState, 'baseAV' | 'currentAV' | 'buffs'>[] } }
   | { type: 'SIMULATE_NEXT' }
   | { type: 'APPLY_BUFF'; payload: { unitId: string; buff: BuffState } }
