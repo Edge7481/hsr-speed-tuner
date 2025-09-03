@@ -1,4 +1,4 @@
-import { BattleState, UnitState, TimelineEntry, TimelineEvent, BattleAction } from "./battleTypes"
+import { BattleState, UnitState, TimelineEntry, TimelineEvent, BattleAction, BuffState } from "./battleTypes"
 import { buildMinHeap, popMin } from "./util"
 
 export function battleReducer(state: BattleState, action: BattleAction): BattleState {
@@ -55,8 +55,47 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
         case 'START_TURN': {
             const unit = state.units[action.payload.unitId]
-            return { ...state, activeUnitId: unit.id }
+            const unitsCopy = { ...state.units }
+        
+            // Track buffs that will expire
+            const expiredBuffs: BuffState[] = []
+        
+            // Decrement buffs and filter out expired ones
+            const updatedBuffs = unit.buffs
+                .map(b => {
+                    if (b.duration) {
+                        const remaining = b.duration - 1
+                        if (remaining <= 0) {
+                            expiredBuffs.push(b)
+                            return null
+                        }
+                        return { ...b, remainingTurns: remaining }
+                    }
+                    return b // permanent buff
+                })
+                .filter((b): b is BuffState => b !== null)
+        
+            // Update the unit
+            unitsCopy[unit.id] = { ...unit, buffs: updatedBuffs }
+        
+            // Dispatch CLEAR_BUFF placeholders for propagated buffs
+            expiredBuffs.forEach(buff => {
+                if (buff.propagateTo) {
+                    buff.propagateTo.forEach(targetBuffId => {
+                        // Placeholder dispatch; implement actual logic elsewhere
+                        console.log('CLEAR_BUFF placeholder for buffId:', targetBuffId)
+                        // Example: dispatch({ type: 'CLEAR_BUFF', payload: { buffId: targetBuffId } })
+                    })
+                }
+            })
+        
+            return {
+                ...state,
+                units: unitsCopy,
+                activeUnitId: unit.id
+            }
         }
+        
 
         case 'ACT_UNIT': {
             const unit = state.units[action.payload.unitId]
@@ -137,6 +176,46 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             unitsCopy[unitId] = unit
             return { ...state, units: unitsCopy }
         }
+
+        case 'CLEAR_BUFF': {
+            const buffToClear: BuffState = action.payload.buff
+            let nextState = { ...state }
+        
+            // First, clear the buff from all units that have it
+            Object.values(nextState.units).forEach(unit => {
+                const index = unit.buffs.findIndex(b => b.id === buffToClear.id)
+                if (index !== -1) {
+                    const [removed] = unit.buffs.splice(index, 1)
+                    
+                    // If it had a SPD effect, call SET_SPD internally
+                    if (removed.effects.spdChange) {
+                        const totalSpdChange = unit.buffs.reduce(
+                            (sum, b) => sum + (b.effects.spdChange ?? 0),
+                            0
+                        )
+                        const newSPD = unit.baseSPD + totalSpdChange
+                        nextState = battleReducer(nextState, {
+                            type: 'SET_SPD',
+                            payload: { unitId: unit.id, newSPD }
+                        })
+                    }
+                }
+            })
+        
+            // Then, clear all propagated buffs recursively
+            if (buffToClear.propagateTo) {
+                buffToClear.propagateTo.forEach(targetBuff => {
+                    nextState = battleReducer(nextState, {
+                        type: 'CLEAR_BUFF',
+                        payload: { buff: targetBuff }
+                    })
+                })
+            }
+        
+            return nextState
+        }
+        
+        
 
         case 'APPLY_EDIT': {
             const { editPoint, modification } = action.payload

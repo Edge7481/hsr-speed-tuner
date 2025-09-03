@@ -1,11 +1,20 @@
-// Buff
+/*
+how to resolve buffs?
+have aura buffs be permanent
+let units be able to give each other buffs
+simplest way would be to separate source and target and have them be separate things?
+*/
+
 export interface BuffState {
-    id: string
-    duration?: number // in turns
+    id: string                  // unique identifier for the buff type
+    belongsTo?: string       // who applied it, for turn-based expiry logic
+    duration?: number           // in turns for targeted buffs
+    propagateTo?: string[]          // array of BUFF IDs linked (for things like auras)
     effects: {
         spdChange?: number
-        advance?: number // fraction of Base AV
-        delay?: number   // fraction of Base AV
+        advance?: number      // fraction of Base AV
+        delay?: number        // fraction of Base AV
+        // extendable with more effects
     }
 }
 
@@ -18,6 +27,7 @@ export interface UnitState {
     baseAV: number
     currentAV: number
     buffs: BuffState[]
+    faction: 'ally' | 'enemy'
 }
 
 // Heap entry (used internally for turn order)
@@ -64,4 +74,5 @@ export type BattleAction =
     | { type: 'SET_SPD'; payload: { unitId: string; newSPD: number } }
     | { type: 'RESET' }
     | { type: 'SIMULATE_NEXT' }
+    | { type: 'CLEAR_BUFF'; payload: {buff: BuffState}}
 
