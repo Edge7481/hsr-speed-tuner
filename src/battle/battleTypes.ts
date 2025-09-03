@@ -1,7 +1,7 @@
 // Buff
 export interface BuffState {
     id: string
-    duration: number // in turns
+    duration?: number // in turns
     effects: {
       spdChange?: number
       advance?: number // fraction of Base AV

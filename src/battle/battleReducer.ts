@@ -28,6 +28,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
         }
 
         case 'SIMULATE_NEXT': {
+            console.log(state.heap)
             //TODO: implement tie-breaks (left to right)
             if (state.heap.length === 0) return state
 
@@ -99,7 +100,19 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             }
 
             unitsCopy[unitId] = unit
-            return { ...state, units: unitsCopy }
+
+            //fix heap
+
+            const heapCopy: TimelineEntry[] = state.heap.map(e => ({
+                ...e,
+                nextActionAV: unitsCopy[e.unitId].currentAV
+            }))
+        
+            return {
+                ...state,
+                units: unitsCopy,
+                heap: buildMinHeap(heapCopy)
+            }
         }
 
         case 'SET_SPD': {

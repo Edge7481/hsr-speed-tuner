@@ -46,7 +46,6 @@ describe("Battle Reducer Hardcoded Timeline", () => {
     state = simulateUntil(state, 150)
 
     const turnEvents = state.events
-    console.log(turnEvents)
 
     // Hardcoded expected sequence. todo break ties
     const expected = [
@@ -68,3 +67,69 @@ describe("Battle Reducer Hardcoded Timeline", () => {
     }
   })
 })
+describe("Battle Reducer Advance/Delay Buffs", () => {
+  it("should advance actions correctly", () => {
+    // Single unit, SPD = 100 → baseAV = 100
+    const unit = { id: "a", name: "ActorA", baseSPD: 100, currentSPD: 100 }
+    let state = initBattle([unit])
+
+    // Simulate first turn
+    state = battleReducer(state, { type: "SIMULATE_NEXT" })
+
+    // Apply 30% advance after first action
+    state = battleReducer(state, {
+      type: "APPLY_BUFF",
+      payload: {
+        unitId: "a",
+        buff: { id: "generic_a", effects: { advance: 0.3 } }, // 30% advance
+      },
+    })
+
+    // Simulate until next 4 actions
+    const limit = 400
+    state = simulateUntil(state, limit)
+
+    const ticks = state.events.map(e => e.tick)
+    // baseAV = 100, so original schedule: 100, 200, 300, 400...
+    // After applying 30% advance after first: 100, 170, 270, 340
+    const expected = [100, 170, 270, 370]
+
+    ticks.slice(0, 4).forEach((tick, i) => {
+      expect(tick).toBeCloseTo(expected[i], 2)
+    })
+  })
+
+  it("should delay actions correctly", () => {
+    // Single unit, SPD = 100 → baseAV = 100
+    const unit = { id: "a", name: "ActorA", baseSPD: 100, currentSPD: 100 }
+    let state = initBattle([unit])
+
+    // Simulate first turn
+    state = battleReducer(state, { type: "SIMULATE_NEXT" })
+
+    // Apply 30% delay after first action
+    state = battleReducer(state, {
+      type: "APPLY_BUFF",
+      payload: {
+        unitId: "a",
+        buff: { id: "generic_a", effects: { delay: 0.3 } }, // 30% delay
+      },
+    })
+
+    // Simulate until next 4 actions
+    const limit = 400
+    state = simulateUntil(state, limit)
+
+    const ticks = state.events.map(e => e.tick)
+    console.log(state.events)
+
+    // baseAV = 100, original: 100, 200, 300, 400
+    // After 30% delay after first: 100, 230, 330, 430
+    const expected = [100, 230, 330, 430]
+
+    ticks.slice(0, 4).forEach((tick, i) => {
+      expect(tick).toBeCloseTo(expected[i], 2)
+    })
+  })
+})
+
