@@ -7,16 +7,18 @@ simplest way would be to separate source and target and have them be separate th
 
 export interface BuffState {
     id: string                  // unique identifier for the buff type
-    belongsTo?: string       // who applied it, for turn-based expiry logic
-    duration?: number           // in turns for targeted buffs
-    propagateTo?: BuffState[]          // array of BUFF IDs linked (for things like auras)
+    belongsTo?: string           // who applied it, for turn-based expiry logic
+    duration?: number            // in turns for targeted buffs
+    propagateTo?: BuffState[]    // array of BuffState linked (for things like auras)
     effects: {
-        spdChange?: number
-        advance?: number      // fraction of Base AV
-        delay?: number        // fraction of Base AV
+        spdChangeFlat?: number    // flat addition to currentSPD
+        spdChangePercent?: number // fraction of baseSPD (0.2 = +20%)
+        advance?: number          // fraction of Base AV
+        delay?: number            // fraction of Base AV
         // extendable with more effects
     }
 }
+
 
 // Unit
 export interface UnitState {

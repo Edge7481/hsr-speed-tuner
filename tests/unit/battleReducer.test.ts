@@ -56,7 +56,7 @@ describe("Battle Reducer Hardcoded Timeline", () => {
       { unitId: "d", tick: 148.515 },
       { unitId: "a", tick: 149.254 },
       { unitId: "c", tick: 149.254 },
-      { unitId: "b", tick: 150.376}
+      { unitId: "b", tick: 150.376 }
     ]
 
     expect(turnEvents.length).toBe(expected.length)
@@ -121,7 +121,6 @@ describe("Battle Reducer Advance/Delay Buffs", () => {
     state = simulateUntil(state, limit)
 
     const ticks = state.events.map(e => e.tick)
-    // console.log(state.events)
 
     // baseAV = 100, original: 100, 200, 300, 400
     // After 30% delay after first: 100, 230, 330, 430

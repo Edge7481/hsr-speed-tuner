@@ -56,10 +56,10 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
         case 'START_TURN': {
             const unit = state.units[action.payload.unitId]
             let nextState = { ...state } // start with current state
-        
+
             // Track buffs that will expire
             const expiredBuffs: BuffState[] = []
-        
+
             // Decrement durations but do not remove buffs yet
             const updatedBuffs = unit.buffs.map(b => {
                 if (b.duration !== undefined) {
@@ -71,11 +71,11 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 }
                 return b // permanent buff
             })
-        
+
             // Update the unit with decremented durations
             const unitsCopy = { ...nextState.units, [unit.id]: { ...unit, buffs: updatedBuffs } }
             nextState = { ...nextState, units: unitsCopy, activeUnitId: unit.id }
-        
+
             // Clear expired buffs via reducer calls
             expiredBuffs.forEach(buff => {
                 nextState = battleReducer(nextState, {
@@ -83,12 +83,12 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                     payload: { buff }
                 })
             })
-        
+
             return nextState
         }
-        
-        
-        
+
+
+
 
         case 'ACT_UNIT': {
             const unit = state.units[action.payload.unitId]
@@ -118,41 +118,42 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
         case 'APPLY_BUFF': {
             const { unitId, buff } = action.payload
             let nextState = { ...state }
-        
+
             // Add the buff to the unit
             const unit = { ...nextState.units[unitId] }
             unit.buffs = [...unit.buffs, buff]
             nextState.units = { ...nextState.units, [unitId]: unit }
-        
+
+            console.log("applying", buff, "to", unitId)
+
             // If buff affects speed, dispatch SET_SPD
-            if (buff.effects.spdChange) {
-                const totalSpdChange = unit.buffs.reduce(
-                    (sum, b) => sum + (b.effects.spdChange ?? 0),
-                    0
-                )
-                const newSPD = unit.baseSPD + totalSpdChange
+            if (buff.effects.spdChangeFlat || buff.effects.spdChangePercent) {
+                const totalFlat = unit.buffs.reduce((sum, b) => sum + (b.effects.spdChangeFlat ?? 0), 0)
+                const totalPercent = unit.buffs.reduce((sum, b) => sum + (b.effects.spdChangePercent ?? 0), 0)
+
+                const newSPD = unit.baseSPD * (1 + totalPercent) + totalFlat
                 nextState = battleReducer(nextState, {
                     type: 'SET_SPD',
                     payload: { unitId, newSPD }
                 })
             }
-        
+
             // Apply advance/delay
             if (buff.effects.advance || buff.effects.delay) {
                 const delta = unit.baseAV * ((buff.effects.advance ?? 0) - (buff.effects.delay ?? 0))
                 const updatedUnit = { ...nextState.units[unitId], currentAV: Math.max(nextState.globalTick, nextState.units[unitId].currentAV - delta) }
                 nextState.units = { ...nextState.units, [unitId]: updatedUnit }
             }
-        
+
             // Rebuild heap based on updated AVs
             const heapCopy: TimelineEntry[] = nextState.heap.map(e => ({
                 ...e,
                 nextActionAV: nextState.units[e.unitId].currentAV
             }))
-        
+
             return { ...nextState, heap: buildMinHeap(heapCopy) }
         }
-        
+
 
         case 'SET_SPD': {
             const { unitId, newSPD } = action.payload
@@ -161,7 +162,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
             const oldSPD = unit.currentSPD
             unit.currentSPD = newSPD
-            unit.currentAV = state.globalTick + (unit.currentAV-state.globalTick) * (oldSPD / newSPD)
+            unit.currentAV = state.globalTick + (unit.currentAV - state.globalTick) * (oldSPD / newSPD)
             unit.baseAV = 10000 / newSPD
 
             unitsCopy[unitId] = unit
@@ -178,19 +179,20 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             const buffToClear: BuffState = action.payload.buff
             let nextState = { ...state }
 
-            console.log('CLEAR_BUFF called')
-        
+
             // First, clear the buff from all units that have it
             Object.values(nextState.units).forEach(unit => {
                 const index = unit.buffs.findIndex(b => b.id === buffToClear.id)
-                console.log(index)
                 if (index !== -1) {
                     const [removed] = unit.buffs.splice(index, 1)
-                    
+
                     // If it had a SPD effect, call SET_SPD internally
-                    if (removed.effects.spdChange) {
-                        
-                        const newSPD = unit.currentSPD - removed.effects.spdChange
+                    if (removed.effects.spdChangeFlat || removed.effects.spdChangePercent) {
+
+                        const totalFlat = unit.buffs.reduce((sum, b) => sum + (b.effects.spdChangeFlat ?? 0), 0)
+                        const totalPercent = unit.buffs.reduce((sum, b) => sum + (b.effects.spdChangePercent ?? 0), 0)
+
+                        const newSPD = unit.baseSPD * (1 + totalPercent) + totalFlat
                         nextState = battleReducer(nextState, {
                             type: 'SET_SPD',
                             payload: { unitId: unit.id, newSPD }
@@ -198,7 +200,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                     }
                 }
             })
-        
+
             // Then, clear all propagated buffs recursively
             if (buffToClear.propagateTo) {
                 buffToClear.propagateTo.forEach(targetBuff => {
@@ -208,11 +210,11 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                     })
                 })
             }
-        
+
             return nextState
         }
-        
-        
+
+
 
         case 'APPLY_EDIT': {
             const { editPoint, modification } = action.payload
