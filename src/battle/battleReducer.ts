@@ -28,51 +28,60 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
         }
 
         case 'SIMULATE_NEXT': {
-            console.log(state.heap)
-            //TODO: implement tie-breaks (left to right)
             if (state.heap.length === 0) return state
 
-            const heapCopy = [...state.heap]
-            const entry = popMin(heapCopy) // unit with lowest nextActionAV
-            const actingUnit = { ...state.units[entry.unitId] }
+            // 1. advance timeline
+            let nextState = battleReducer(state, { type: 'PROGRESS_TIMELINE' })
 
-            // Advance globalTick to acting unit's scheduled tick
-            const globalTick = entry.nextActionAV
+            const unitId = nextState.activeUnitId!
 
-            // Unit acts
-            const actionType = 'default' // placeholder
+            // 2. start turn
+            nextState = battleReducer(nextState, { type: 'START_TURN', payload: { unitId } })
+
+            // 3. act unit
+            nextState = battleReducer(nextState, {
+                type: 'ACT_UNIT',
+                payload: { unitId, actionType: 'default', actionCount: nextState.heap.find(e => e.unitId === unitId)?.actionCount ?? 0 }
+            })
+
+            return nextState
+        }
+
+        case 'PROGRESS_TIMELINE': {
+            // Find the next unit from the heap but don't pop it
+            const next = state.heap[0]
+            return { ...state, globalTick: next.nextActionAV, activeUnitId: next.unitId }
+        }
+
+        case 'START_TURN': {
+            const unit = state.units[action.payload.unitId]
+            return { ...state, activeUnitId: unit.id }
+        }
+
+        case 'ACT_UNIT': {
+            const unit = state.units[action.payload.unitId]
+            const heapCopy = state.heap.filter(e => e.unitId !== unit.id)
+            const updatedUnit = { ...unit, currentAV: unit.currentAV + unit.baseAV }
+
+            heapCopy.push({ unitId: unit.id, nextActionAV: updatedUnit.currentAV, actionCount: action.payload.actionCount + 1 })
+
             const snapshot = Object.values(state.units).map(u => ({ ...u }))
             const event: TimelineEvent = {
-                tick: globalTick,
-                unitId: actingUnit.id,
-                actionType,
+                tick: state.globalTick,
+                unitId: unit.id,
+                actionType: action.payload.actionType,
                 stateSnapshot: snapshot
             }
 
-            // Reset acting unit's nextActionAV by adding baseAV
-            const updatedUnit: UnitState = {
-                ...actingUnit,
-                currentAV: actingUnit.currentAV + actingUnit.baseAV
-            }
-
-            // Update units
-            const unitsCopy = { ...state.units, [updatedUnit.id]: updatedUnit }
-
-            // Push back into heap
-            heapCopy.push({
-                unitId: updatedUnit.id,
-                nextActionAV: updatedUnit.currentAV,
-                actionCount: entry.actionCount + 1
-            })
-
             return {
                 ...state,
-                units: unitsCopy,
+                units: { ...state.units, [unit.id]: updatedUnit },
                 heap: buildMinHeap(heapCopy),
                 events: [...state.events, event],
-                globalTick
+                activeUnitId: undefined
             }
         }
+
 
         case 'APPLY_BUFF': {
             const { unitId, buff } = action.payload
@@ -107,7 +116,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 ...e,
                 nextActionAV: unitsCopy[e.unitId].currentAV
             }))
-        
+
             return {
                 ...state,
                 units: unitsCopy,
