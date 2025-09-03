@@ -93,7 +93,7 @@ describe("Battle Reducer Advance/Delay Buffs", () => {
     // baseAV = 100, so original schedule: 100, 200, 300, 400...
     // After applying 30% advance after first: 100, 170, 270, 340
     const expected = [100, 170, 270, 370]
-2
+
     ticks.slice(0, 4).forEach((tick, i) => {
       expect(tick).toBeCloseTo(expected[i], 2)
     })
@@ -121,7 +121,7 @@ describe("Battle Reducer Advance/Delay Buffs", () => {
     state = simulateUntil(state, limit)
 
     const ticks = state.events.map(e => e.tick)
-    console.log(state.events)
+    // console.log(state.events)
 
     // baseAV = 100, original: 100, 200, 300, 400
     // After 30% delay after first: 100, 230, 330, 430

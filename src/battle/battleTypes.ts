@@ -9,7 +9,7 @@ export interface BuffState {
     id: string                  // unique identifier for the buff type
     belongsTo?: string       // who applied it, for turn-based expiry logic
     duration?: number           // in turns for targeted buffs
-    propagateTo?: string[]          // array of BUFF IDs linked (for things like auras)
+    propagateTo?: BuffState[]          // array of BUFF IDs linked (for things like auras)
     effects: {
         spdChange?: number
         advance?: number      // fraction of Base AV
@@ -27,7 +27,6 @@ export interface UnitState {
     baseAV: number
     currentAV: number
     buffs: BuffState[]
-    faction: 'ally' | 'enemy'
 }
 
 // Heap entry (used internally for turn order)

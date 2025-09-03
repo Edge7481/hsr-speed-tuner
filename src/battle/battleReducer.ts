@@ -55,46 +55,39 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
         case 'START_TURN': {
             const unit = state.units[action.payload.unitId]
-            const unitsCopy = { ...state.units }
+            let nextState = { ...state } // start with current state
         
             // Track buffs that will expire
             const expiredBuffs: BuffState[] = []
         
-            // Decrement buffs and filter out expired ones
-            const updatedBuffs = unit.buffs
-                .map(b => {
-                    if (b.duration) {
-                        const remaining = b.duration - 1
-                        if (remaining <= 0) {
-                            expiredBuffs.push(b)
-                            return null
-                        }
-                        return { ...b, remainingTurns: remaining }
+            // Decrement durations but do not remove buffs yet
+            const updatedBuffs = unit.buffs.map(b => {
+                if (b.duration !== undefined) {
+                    const newDuration = b.duration - 1
+                    if (newDuration <= 0) {
+                        expiredBuffs.push(b)
                     }
-                    return b // permanent buff
-                })
-                .filter((b): b is BuffState => b !== null)
-        
-            // Update the unit
-            unitsCopy[unit.id] = { ...unit, buffs: updatedBuffs }
-        
-            // Dispatch CLEAR_BUFF placeholders for propagated buffs
-            expiredBuffs.forEach(buff => {
-                if (buff.propagateTo) {
-                    buff.propagateTo.forEach(targetBuffId => {
-                        // Placeholder dispatch; implement actual logic elsewhere
-                        console.log('CLEAR_BUFF placeholder for buffId:', targetBuffId)
-                        // Example: dispatch({ type: 'CLEAR_BUFF', payload: { buffId: targetBuffId } })
-                    })
+                    return { ...b, duration: newDuration }
                 }
+                return b // permanent buff
             })
         
-            return {
-                ...state,
-                units: unitsCopy,
-                activeUnitId: unit.id
-            }
+            // Update the unit with decremented durations
+            const unitsCopy = { ...nextState.units, [unit.id]: { ...unit, buffs: updatedBuffs } }
+            nextState = { ...nextState, units: unitsCopy, activeUnitId: unit.id }
+        
+            // Clear expired buffs via reducer calls
+            expiredBuffs.forEach(buff => {
+                nextState = battleReducer(nextState, {
+                    type: 'CLEAR_BUFF',
+                    payload: { buff }
+                })
+            })
+        
+            return nextState
         }
+        
+        
         
 
         case 'ACT_UNIT': {
@@ -124,44 +117,42 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
         case 'APPLY_BUFF': {
             const { unitId, buff } = action.payload
-            const unit = { ...state.units[unitId] }
-            const unitsCopy = { ...state.units }
-
+            let nextState = { ...state }
+        
+            // Add the buff to the unit
+            const unit = { ...nextState.units[unitId] }
             unit.buffs = [...unit.buffs, buff]
-
+            nextState.units = { ...nextState.units, [unitId]: unit }
+        
+            // If buff affects speed, dispatch SET_SPD
             if (buff.effects.spdChange) {
-                //find remaining av and apply spd change to av
-                const oldSPD = unit.currentSPD
-                unit.currentSPD += buff.effects.spdChange
-                const newSPD = unit.currentSPD
-                const remainingTime = unit.currentAV - state.globalTick
-                const newBaseAV = 10000 / newSPD
-                unit.baseAV = newBaseAV
-                unit.currentAV = state.globalTick + remainingTime * (oldSPD / newSPD)
-
+                const totalSpdChange = unit.buffs.reduce(
+                    (sum, b) => sum + (b.effects.spdChange ?? 0),
+                    0
+                )
+                const newSPD = unit.baseSPD + totalSpdChange
+                nextState = battleReducer(nextState, {
+                    type: 'SET_SPD',
+                    payload: { unitId, newSPD }
+                })
             }
-
+        
+            // Apply advance/delay
             if (buff.effects.advance || buff.effects.delay) {
-                // set to either right now or apply advance
                 const delta = unit.baseAV * ((buff.effects.advance ?? 0) - (buff.effects.delay ?? 0))
-                unit.currentAV = Math.max(state.globalTick, unit.currentAV - delta)
+                const updatedUnit = { ...nextState.units[unitId], currentAV: Math.max(nextState.globalTick, nextState.units[unitId].currentAV - delta) }
+                nextState.units = { ...nextState.units, [unitId]: updatedUnit }
             }
-
-            unitsCopy[unitId] = unit
-
-            //fix heap
-
-            const heapCopy: TimelineEntry[] = state.heap.map(e => ({
+        
+            // Rebuild heap based on updated AVs
+            const heapCopy: TimelineEntry[] = nextState.heap.map(e => ({
                 ...e,
-                nextActionAV: unitsCopy[e.unitId].currentAV
+                nextActionAV: nextState.units[e.unitId].currentAV
             }))
-
-            return {
-                ...state,
-                units: unitsCopy,
-                heap: buildMinHeap(heapCopy)
-            }
+        
+            return { ...nextState, heap: buildMinHeap(heapCopy) }
         }
+        
 
         case 'SET_SPD': {
             const { unitId, newSPD } = action.payload
@@ -170,30 +161,36 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
             const oldSPD = unit.currentSPD
             unit.currentSPD = newSPD
-            unit.currentAV = unit.currentAV * (oldSPD / newSPD)
+            unit.currentAV = state.globalTick + (unit.currentAV-state.globalTick) * (oldSPD / newSPD)
             unit.baseAV = 10000 / newSPD
 
             unitsCopy[unitId] = unit
-            return { ...state, units: unitsCopy }
+
+            const heapCopy: TimelineEntry[] = state.heap.map(e => ({
+                ...e,
+                nextActionAV: unitsCopy[e.unitId].currentAV
+            }))
+
+            return { ...state, units: unitsCopy, heap: buildMinHeap(heapCopy) }
         }
 
         case 'CLEAR_BUFF': {
             const buffToClear: BuffState = action.payload.buff
             let nextState = { ...state }
+
+            console.log('CLEAR_BUFF called')
         
             // First, clear the buff from all units that have it
             Object.values(nextState.units).forEach(unit => {
                 const index = unit.buffs.findIndex(b => b.id === buffToClear.id)
+                console.log(index)
                 if (index !== -1) {
                     const [removed] = unit.buffs.splice(index, 1)
                     
                     // If it had a SPD effect, call SET_SPD internally
                     if (removed.effects.spdChange) {
-                        const totalSpdChange = unit.buffs.reduce(
-                            (sum, b) => sum + (b.effects.spdChange ?? 0),
-                            0
-                        )
-                        const newSPD = unit.baseSPD + totalSpdChange
+                        
+                        const newSPD = unit.currentSPD - removed.effects.spdChange
                         nextState = battleReducer(nextState, {
                             type: 'SET_SPD',
                             payload: { unitId: unit.id, newSPD }
