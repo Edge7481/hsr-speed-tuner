@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Heading, Text, Stack, Button } from "@chakra-ui/react";
-import BattleControls from "./components/BattleControls";
+import {BattleControls} from "./components/BattleControls";
 
 function App() {
   return (
