@@ -1,4 +1,6 @@
-import { Button, Box, Heading, Text, Stack } from '@chakra-ui/react'
+import React from "react";
+import { Box, Heading, Text, Stack, Button } from "@chakra-ui/react";
+import BattleControls from "./components/BattleControls";
 
 function App() {
   return (
@@ -8,12 +10,19 @@ function App() {
         This frontend is using Chakra UI, so it looks good without custom CSS.
       </Text>
 
-      <Stack direction="row" spacing = {4}>
+      <Stack direction="row" gap={4} mb={8}>
         <Button colorScheme="blue">Primary Action</Button>
-        <Button colorScheme="gray" variant="outline">Secondary</Button>
+        <Button colorScheme="gray" variant="outline">
+          Secondary
+        </Button>
       </Stack>
+
+      {/* Battle controls tab interface */}
+      <Box borderWidth="1px" borderRadius="md" p={4} shadow="md">
+        <BattleControls />
+      </Box>
     </Box>
-  )
+  );
 }
 
-export default App
+export default App;
