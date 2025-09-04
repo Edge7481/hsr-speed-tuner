@@ -19,6 +19,19 @@ export interface BuffState {
     }
 }
 
+export interface BuffTemplate {
+    id: string                // unique type
+    name?: string             // display
+    effects: {
+        spdChange?: number
+        spdPercent?: number   // optional
+        advance?: number
+        delay?: number
+    }
+    duration?: number          // default duration
+    schedule: Record<string, number[]>
+}
+
 
 // Unit
 export interface UnitState {
