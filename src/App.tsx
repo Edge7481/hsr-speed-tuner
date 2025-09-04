@@ -1,11 +1,19 @@
-import React from 'react';
-import { BattleControls } from './components/BattleControls';
+import { Button, Box, Heading, Text, Stack } from '@chakra-ui/react'
 
-export default function App() {
+function App() {
   return (
-    <div style={{ padding: '1rem' }}>
-      <h1>Battle Demo</h1>
-      <BattleControls />
-    </div>
-  );
+    <Box p={8}>
+      <Heading mb={4}>My Backend Dashboard</Heading>
+      <Text mb={6}>
+        This frontend is using Chakra UI, so it looks good without custom CSS.
+      </Text>
+
+      <Stack direction="row" spacing = {4}>
+        <Button colorScheme="blue">Primary Action</Button>
+        <Button colorScheme="gray" variant="outline">Secondary</Button>
+      </Stack>
+    </Box>
+  )
 }
+
+export default App
