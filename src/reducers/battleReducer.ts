@@ -1,4 +1,5 @@
 import { BattleState, UnitState, TimelineEntry, TimelineEvent, BattleAction, BuffState } from "../types/battleTypes"
+import { instantiateBuff } from "../utils/buffHelper"
 import { buildMinHeap, popMin } from "../utils/util"
 
 export function battleReducer(state: BattleState, action: BattleAction): BattleState {
@@ -43,6 +44,8 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 type: 'ACT_UNIT',
                 payload: { unitId, actionType: 'default', actionCount: nextState.heap.find(e => e.unitId === unitId)?.actionCount ?? 0 }
             })
+
+            console.log(nextState.units)
 
             return nextState
         }
@@ -105,6 +108,19 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 stateSnapshot: snapshot
             }
 
+            // Check if any buffs should trigger
+            state.buffTemplates?.forEach(template => {
+                const triggers = template.schedule[unit.id]
+                if (triggers?.includes(action.payload.actionCount + 1)) {
+                    const buff = instantiateBuff(template, unit.id)
+                    state = battleReducer(state, {
+                        type: "APPLY_BUFF",
+                        payload: { unitId: unit.id, buff }
+                    })
+                }
+            })
+
+
             return {
                 ...state,
                 units: { ...state.units, [unit.id]: updatedUnit },
@@ -124,7 +140,6 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             unit.buffs = [...unit.buffs, buff]
             nextState.units = { ...nextState.units, [unitId]: unit }
 
-            console.log("applying", buff, "to", unitId)
 
             // If buff affects speed, dispatch SET_SPD
             if (buff.effects.spdChangeFlat || buff.effects.spdChangePercent) {
@@ -150,6 +165,9 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 ...e,
                 nextActionAV: nextState.units[e.unitId].currentAV
             }))
+
+            console.log("applying", buff, "new state", nextState.units)
+
 
             return { ...nextState, heap: buildMinHeap(heapCopy) }
         }

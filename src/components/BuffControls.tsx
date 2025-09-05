@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Box, Button, VStack, HStack, Input, NativeSelect } from "@chakra-ui/react"
 import { BuffTemplate, UnitState, EffectKey } from "../types/battleTypes"
 
-const effectOptions: EffectKey[] = ["spdChange", "spdPercent", "advance", "delay"]
+const effectOptions: EffectKey[] = ["spdChangeFlat", "spdChangePercent", "advance", "delay"]
 
 interface BuffTemplateUI extends BuffTemplate {
   selectedEffect?: EffectKey

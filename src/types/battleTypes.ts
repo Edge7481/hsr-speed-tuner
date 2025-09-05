@@ -23,8 +23,8 @@ export interface BuffTemplate {
     id: string                // unique type
     name?: string             // display
     effects: {
-        spdChange?: number
-        spdPercent?: number   // optional
+        spdChangeFlat?: number
+        spdChangePercent?: number   // optional
         advance?: number
         delay?: number
     }
@@ -75,12 +75,14 @@ export interface BattleState {
     heap: TimelineEntry[]
     events: TimelineEvent[]
     globalTick: number
+    buffTemplates?: BuffTemplate[]
+
 }
 
 export type BattleAction =
     | {
         type: 'INIT_BATTLE'
-        payload: { units: Omit<UnitState, 'baseAV' | 'currentAV' | 'buffs'>[] }
+        payload: { units: Omit<UnitState, 'baseAV' | 'currentAV' | 'currentSPD' | 'buffs'>[] }
     }
     | { type: 'PROGRESS_TIMELINE' } // advance globalTick to the next unit's turn
     | { type: 'START_TURN'; payload: { unitId: string } } // marks a unit as active, buffs can be applied

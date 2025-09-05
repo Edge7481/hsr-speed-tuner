@@ -61,8 +61,8 @@ export function instantiateBuff(
     duration: template.duration,
     propagateTo: [],
     effects: {
-      spdChangeFlat: template.effects.spdChange ?? 0,
-      spdChangePercent: template.effects.spdPercent ?? 0,
+      spdChangeFlat: template.effects.spdChangeFlat ?? 0,
+      spdChangePercent: template.effects.spdChangePercent ?? 0,
       advance: template.effects.advance ?? 0,
       delay: template.effects.delay ?? 0,
     },
