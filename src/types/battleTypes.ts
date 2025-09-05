@@ -50,8 +50,8 @@ export interface UnitSetup {
     id: string
     name: string
     baseSPD: number
-  }
-  
+}
+
 
 // Heap entry (used internally for turn order)
 export interface TimelineEntry {
@@ -99,5 +99,6 @@ export type BattleAction =
     | { type: 'SET_SPD'; payload: { unitId: string; newSPD: number } }
     | { type: 'RESET' }
     | { type: 'SIMULATE_NEXT' }
-    | { type: 'CLEAR_BUFF'; payload: {buff: BuffState}}
+    | { type: 'CLEAR_BUFF'; payload: { buff: BuffState } }
+    | { type: 'POST_ACTION'; payload: { unitId: string; actionCount: number } }
 

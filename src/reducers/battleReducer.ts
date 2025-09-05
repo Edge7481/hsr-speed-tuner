@@ -45,7 +45,12 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 payload: { unitId, actionType: 'default', actionCount: nextState.heap.find(e => e.unitId === unitId)?.actionCount ?? 0 }
             })
 
-            console.log(nextState.units)
+            // 4. resolve post action interrupts
+            nextState = battleReducer(nextState, {
+                type: 'POST_ACTION',
+                payload: { unitId, actionCount: nextState.heap.find(e => e.unitId === unitId)?.actionCount ?? 0 }
+            })
+
 
             return nextState
         }
@@ -109,6 +114,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             }
 
             // Check if any buffs should trigger
+            //todo: move this to after nextstate
             state.buffTemplates?.forEach(template => {
                 const triggers = template.schedule[unit.id]
                 if (triggers?.includes(action.payload.actionCount + 1)) {
@@ -120,6 +126,9 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 }
             })
 
+            // console.log(state.units)
+
+
 
             return {
                 ...state,
@@ -129,6 +138,29 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 activeUnitId: undefined
             }
         }
+
+        case 'POST_ACTION': {
+            let nextState = { ...state }
+
+            const { unitId, actionCount } = action.payload
+
+
+            // Go through all templates and see if any buffs are scheduled here
+            for (const template of state.buffTemplates ?? []) {
+                const turns = template.schedule[unitId] ?? []
+                if (turns.includes(actionCount)) {
+                    const buff = instantiateBuff(template, unitId)
+                    nextState = battleReducer(nextState, {
+                        type: 'APPLY_BUFF',
+                        payload: { unitId, buff }
+                    })
+                }
+            }
+
+
+            return nextState
+        }
+
 
 
         case 'APPLY_BUFF': {
@@ -152,6 +184,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                     payload: { unitId, newSPD }
                 })
             }
+            console.log(nextState.units)
 
             // Apply advance/delay
             if (buff.effects.advance || buff.effects.delay) {
@@ -166,7 +199,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 nextActionAV: nextState.units[e.unitId].currentAV
             }))
 
-            console.log("applying", buff, "new state", nextState.units)
+            // console.log("applying", buff, "new state", nextState.units)
 
 
             return { ...nextState, heap: buildMinHeap(heapCopy) }
@@ -183,12 +216,14 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             unit.currentAV = state.globalTick + (unit.currentAV - state.globalTick) * (oldSPD / newSPD)
             unit.baseAV = 10000 / newSPD
 
+
             unitsCopy[unitId] = unit
 
             const heapCopy: TimelineEntry[] = state.heap.map(e => ({
                 ...e,
                 nextActionAV: unitsCopy[e.unitId].currentAV
             }))
+
 
             return { ...state, units: unitsCopy, heap: buildMinHeap(heapCopy) }
         }
