@@ -12,7 +12,7 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 units[u.id] = {
                     ...u,
                     currentSPD: u.baseSPD,
-                    baseAV,
+                    baseAV: baseAV,
                     currentAV: baseAV,
                     buffs: []
                 }
@@ -116,7 +116,6 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
 
         case 'APPLY_BUFF': {
-            console.log(state)
             const { unitId, buff } = action.payload
             let nextState = { ...state }
 

@@ -1,4 +1,3 @@
-// BattleControls.tsx
 import { useState } from "react"
 import { VStack, Box, Heading } from "@chakra-ui/react"
 import { UnitState, BuffTemplate } from "../types/battleTypes"
@@ -6,7 +5,6 @@ import { PartySetupTab } from "./PartySetupTab"
 import { BuffControls } from "./BuffControls"
 
 export function BattleControls() {
-  // Shared state for units
   const [units, setUnits] = useState<UnitState[]>([
     { id: 'u1', name: 'Unit 1', baseSPD: 100, currentSPD: 100, baseAV: 100, currentAV: 100, buffs: [] },
     { id: 'u2', name: 'Unit 2', baseSPD: 100, currentSPD: 100, baseAV: 100, currentAV: 100, buffs: [] },
@@ -14,7 +12,6 @@ export function BattleControls() {
     { id: 'u4', name: 'Unit 4', baseSPD: 100, currentSPD: 100, baseAV: 100, currentAV: 100, buffs: [] },
   ])
 
-  // Buff templates state (for simulator later)
   const [buffTemplates, setBuffTemplates] = useState<BuffTemplate[]>([])
 
   return (
@@ -27,11 +24,17 @@ export function BattleControls() {
       <Box>
         <Heading size="md" mb={4}>Buff Controls</Heading>
         <BuffControls
-          units={units} 
-          // buffs={buffTemplates} 
-          // setBuffs={setBuffTemplates} 
+          units={units}
+          onChange={setBuffTemplates} // pass changes back
         />
       </Box>
+      <Box>
+        <Heading size="md" mb={2}>Debug Dump</Heading>
+        <pre style={{ fontSize: "12px", whiteSpace: "pre-wrap" }}>
+          {JSON.stringify({ units, buffTemplates }, null, 2)}
+        </pre>
+      </Box>
+
     </VStack>
   )
 }

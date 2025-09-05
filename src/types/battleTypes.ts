@@ -32,6 +32,8 @@ export interface BuffTemplate {
     schedule: Record<string, number[]>
 }
 
+export type EffectKey = keyof BuffTemplate["effects"]
+
 
 // Unit
 export interface UnitState {
@@ -43,6 +45,13 @@ export interface UnitState {
     currentAV: number
     buffs: BuffState[]
 }
+
+export interface UnitSetup {
+    id: string
+    name: string
+    baseSPD: number
+  }
+  
 
 // Heap entry (used internally for turn order)
 export interface TimelineEntry {
