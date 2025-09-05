@@ -133,17 +133,21 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
             for (const template of state.buffTemplates ?? []) {
               for (const sched of template.schedule) {
                 if (sched.source === unitId && sched.turns.includes(actionCount)) {
-                  const buff = instantiateBuff(template, sched.target)
-                  nextState = battleReducer(nextState, {
-                    type: 'APPLY_BUFF',
-                    payload: { unitId: sched.target, buff }
-                  })
+                  // Apply the buff to all targets
+                  for (const targetId of sched.target) {
+                    const buff = instantiateBuff(template, targetId)
+                    nextState = battleReducer(nextState, {
+                      type: 'APPLY_BUFF',
+                      payload: { unitId: targetId, buff }
+                    })
+                  }
                 }
               }
             }
           
             return nextState
-        }          
+          }
+            
 
 
 

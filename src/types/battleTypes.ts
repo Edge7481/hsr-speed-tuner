@@ -34,7 +34,7 @@ export interface BuffTemplate {
 
 export interface BuffSchedule {
     source: string    // unitId whose action triggers this
-    target: string    // unitId who gets the buff
+    target: string[]    // unitId who gets the buff
     turns: number[]   // which actions of the source cause it
   }
 

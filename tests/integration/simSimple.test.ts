@@ -17,7 +17,7 @@ test("Alice gets +20 SPD buff after turn 1 and keeps it for 3 turns", () => {
       schedule: [
         {
           source: 'u1',
-          target: 'u1',
+          target: ['u1'],
           turns: [1]
         }
       ]
