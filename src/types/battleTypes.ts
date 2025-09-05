@@ -29,8 +29,16 @@ export interface BuffTemplate {
         delay?: number
     }
     duration?: number          // default duration
-    schedule: Record<string, number[]>
+    schedule: BuffSchedule[]
 }
+
+export interface BuffSchedule {
+    source: string    // unitId whose action triggers this
+    target: string    // unitId who gets the buff
+    turns: number[]   // which actions of the source cause it
+  }
+
+  
 
 export type EffectKey = keyof BuffTemplate["effects"]
 

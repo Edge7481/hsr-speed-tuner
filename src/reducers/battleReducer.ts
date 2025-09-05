@@ -113,19 +113,6 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
                 stateSnapshot: snapshot
             }
 
-            // Check if any buffs should trigger
-            //todo: move this to after nextstate
-            state.buffTemplates?.forEach(template => {
-                const triggers = template.schedule[unit.id]
-                if (triggers?.includes(action.payload.actionCount + 1)) {
-                    const buff = instantiateBuff(template, unit.id)
-                    state = battleReducer(state, {
-                        type: "APPLY_BUFF",
-                        payload: { unitId: unit.id, buff }
-                    })
-                }
-            })
-
             // console.log(state.units)
 
 
@@ -141,25 +128,22 @@ export function battleReducer(state: BattleState, action: BattleAction): BattleS
 
         case 'POST_ACTION': {
             let nextState = { ...state }
-
             const { unitId, actionCount } = action.payload
-
-
-            // Go through all templates and see if any buffs are scheduled here
+          
             for (const template of state.buffTemplates ?? []) {
-                const turns = template.schedule[unitId] ?? []
-                if (turns.includes(actionCount)) {
-                    const buff = instantiateBuff(template, unitId)
-                    nextState = battleReducer(nextState, {
-                        type: 'APPLY_BUFF',
-                        payload: { unitId, buff }
-                    })
+              for (const sched of template.schedule) {
+                if (sched.source === unitId && sched.turns.includes(actionCount)) {
+                  const buff = instantiateBuff(template, sched.target)
+                  nextState = battleReducer(nextState, {
+                    type: 'APPLY_BUFF',
+                    payload: { unitId: sched.target, buff }
+                  })
                 }
+              }
             }
-
-
+          
             return nextState
-        }
+        }          
 
 
 

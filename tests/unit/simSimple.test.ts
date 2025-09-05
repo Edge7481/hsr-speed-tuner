@@ -1,8 +1,9 @@
 import { expect, test } from "vitest"
 import { battleReducer } from "../../src/reducers/battleReducer"
 import { runSimulation } from "../../src/reducers/simulator"
+import { source } from "framer-motion/client"
 
-test("Alice gets +20 SPD buff after turn 1 and keeps it for 5 turns", () => {
+test("Alice gets +20 SPD buff after turn 1 and keeps it for 3 turns", () => {
   const initial = battleReducer(undefined as any, {
     type: "INIT_BATTLE",
     payload: { units: [{ id: "u1", name: "Alice", baseSPD: 100 }] }
@@ -13,7 +14,13 @@ test("Alice gets +20 SPD buff after turn 1 and keeps it for 5 turns", () => {
       id: "spdBoost",
       effects: { spdChangeFlat: 20 },  
       duration: 3,
-      schedule: { u1: [1] }
+      schedule: [
+        {
+          source: 'u1',
+          target: 'u1',
+          turns: [1]
+        }
+      ]
     }
   ]
 
