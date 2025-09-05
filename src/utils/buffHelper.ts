@@ -1,5 +1,5 @@
 import { battleReducer } from "../reducers/battleReducer"
-import { BattleState, BuffState } from "../types/battleTypes"
+import { BattleState, BuffState, BuffTemplate } from "../types/battleTypes"
 
 // Helper to apply aura buffs
 export function applyAuraBuff(
@@ -47,4 +47,24 @@ export function applyAuraBuff(
     })
 
     return nextState
+}
+
+import { v4 as uuidv4 } from "uuid"
+
+export function instantiateBuff(
+  template: BuffTemplate,
+  belongsTo?: string
+): BuffState {
+  return {
+    id: uuidv4(),
+    belongsTo,
+    duration: template.duration,
+    propagateTo: [],
+    effects: {
+      spdChangeFlat: template.effects.spdChange ?? 0,
+      spdChangePercent: template.effects.spdPercent ?? 0,
+      advance: template.effects.advance ?? 0,
+      delay: template.effects.delay ?? 0,
+    },
+  }
 }

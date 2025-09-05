@@ -29,6 +29,7 @@
     "@vitejs/plugin-react": "^5.0.2",
     "framer-motion": "^12.23.12",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "uuid": "^11.1.0"
   }
 }
